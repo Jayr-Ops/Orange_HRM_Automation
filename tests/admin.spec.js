@@ -1,0 +1,62 @@
+const {test,expect} = require('../fixtures/baseFixtures')
+const { AppConstant } =  require('../constants/AppConstant')
+const { CommanMethod } = require('../utils/CommanMethod')
+const { admin } = require('../Page/admin')
+const { dashboard } = require('../Page/dashboard')
+const {Jsonreader} = require('../utils/JsonReader')
+const login_data = Jsonreader.login_details()
+const userDetails = Jsonreader.User_Details()
+require('../hooks/hooks')
+
+test.describe('Admin',()=>{
+    test('Open User Management page',{tag: '@smoke'}, async({loginpage2,dashboard1,admin1}) => {
+        await dashboard1.openAdminModule()
+        await dashboard1.isAdminPageDisplayed()
+        await admin1.openUserManagement()
+        await admin1.isUserManagementPageDisplayed()
+    })
+    test('Search user by username',{tag: '@regression'},async({loginpage2,dashboard1,admin1})=>{
+        await dashboard1.openAdminModule()
+        await admin1.searchUser(userDetails.UserDetails1.Username)
+        await admin1.isUserSearchResultDisplayed()
+    })
+    test('Search user with non-existing username',{tag: '@regression'},async({loginpage2,dashboard1,admin1})=>{
+        await dashboard1.openAdminModule()
+        await admin1.searchUser(userDetails.UserDetails2.Username)
+        await admin1.isNoUserResultDisplayed()
+    })
+    test('Reset User Management search filters',{tag: '@regression'},async({loginpage2,dashboard1,admin1})=>{
+        await dashboard1.openAdminModule()
+        await admin1.searchUser(userDetails.UserDetails1.Username)
+        await admin1.resetUserSearchFilters()
+        await admin1.areUserSearchFiltersCleared()
+    })
+    test('Open Add User form',{tag: '@regression'},async({loginpage2,dashboard1,admin1})=>{
+        await dashboard1.openAdminModule()
+        await admin1.clickAddUser()
+        await admin1.isAddUserFormDisplayed()
+    })
+    test('Validate mandatory fields on Add User form',{tag: '@regression'},async({loginpage2,dashboard1,admin1})=>{
+        await dashboard1.openAdminModule()
+        await admin1.clickAddUser()
+        await admin1.isAddUserFormDisplayed()
+        await admin1.clickSaveUser()
+        const messages = await admin1.getRequiredFieldMessages()
+        expect(messages.length).toBeGreaterThan(0)
+        expect(messages.every(message => message.trim() === 'Required' || 'Passwords do not match')).toBeTruthy();
+    })
+    test('Cancel Add User form without saving',{tag: '@regression'},async({loginpage2,dashboard1,admin1})=>{
+        await dashboard1.openAdminModule()
+        await admin1.clickAddUser()
+        await admin1.isAddUserFormDisplayed()
+        await admin1.clickCancelAddUser()
+        await admin1.isUserManagementPageDisplayed()
+    })
+    test('Open Admin module Configuration options',{tag: '@regression'},async({loginpage2,dashboard1,admin1})=>{
+        await dashboard1.openAdminModule()
+        await admin1.openConfigurationMenu()
+        const options = await admin1.getConfigurationOptions()
+        console.log('Configuration Options:',options)
+        expect(options.length).toBeGreaterThan(0)
+    })
+})
